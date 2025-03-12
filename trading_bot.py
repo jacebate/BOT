@@ -346,8 +346,14 @@ def smc_trading_bot(symbols, timeframe=mt5.TIMEFRAME_M15):
                 logging.error("Missing indicators in DataFrame. Skipping trade.")
                 continue
 
-            # Define RL state variables
-            state = df.iloc[-1][['rsi', 'macd', 'bb_middle']].values
+            # Ensure the state columns are numeric
+            try:
+                state = df[['rsi', 'macd', 'bb_middle']].iloc[-1].values.astype(np.float32)  # Convert to float32
+            except ValueError as e:
+                logging.error(f"Failed to convert state to numeric values: {e}")
+                continue
+
+            # Choose action using RL agent
             action = model.choose_action(state)
 
             # Define trade parameters
@@ -375,7 +381,7 @@ def smc_trading_bot(symbols, timeframe=mt5.TIMEFRAME_M15):
             send_telegram_alert(f"Trade executed: {get_trade_details()}")
 
         time.sleep(60)
-
+        
 # ✅ Run the Trading Bot
 if __name__ == "__main__":
     symbols = ["BTCUSD", "ETHUSD"]
